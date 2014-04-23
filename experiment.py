@@ -8,6 +8,8 @@ class Experiment(object):
         self.params = params
         self.paramCounts = {}
         self.assignments = defaultdict(dict)
+        for param in self.params:
+            param.dist = dict.fromkeys(param.choices)
   
     def assign(self, subject_id):
         if self.assignments[subject_id]:
@@ -26,4 +28,5 @@ class Experiment(object):
                 
 
 
-color = (choices=["red", "green"], conditioned_on=["shape"])
+# Example color = (choices=["red", "green"], conditioned_on=["shape"])
+# color.choices = ("red":0, "green":1)
