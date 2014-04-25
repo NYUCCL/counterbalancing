@@ -53,3 +53,17 @@ class Experiment(object):
                     param["dist"][cc][assignment] += 1
                     self.assignments[subject_id][param["name"]] = assignment
         return self.assignments[subject_id]
+        
+    def remove(self, subject_id):
+        if self.assignments[subject_id]:
+            for param in self.params:
+                assignment = self.assignments[subject_id][param["name"]]
+                if len(param["choices"]) != 0:
+                    if len(param["conditioned_on"]) == 0:
+                        param["dist"][assignment] -= 1
+                    else:
+                        conditioned_choices = []
+                        for conditioner in param["conditioned_on"]:
+                            conditioned_choices.append(self.assignments[subject_id][conditioner["name"]])
+                        cc = tuple(conditioned_choices)
+                        param["dist"][cc][assignment] -= 1
