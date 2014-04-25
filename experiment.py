@@ -1,5 +1,6 @@
 from collections import defaultdict, deque
 import random
+import copy
 from itertools import product
 
 class Experiment(object):
@@ -9,14 +10,15 @@ class Experiment(object):
         self.paramCounts = {}
         self.assignments = defaultdict(dict)
         for param in self.params:
+            d = dict.fromkeys(param["choices"], 0)
             if len(param["conditioned_on"]) == 0:
-                param["dist"] = dict.fromkeys(param["choices"], 0)
+                param["dist"] = copy.deepcopy(d)
             else:
                 conditioned_choices = [] 
                 for conditioner in param["conditioned_on"]:
                     conditioned_choices.append(conditioner["choices"])
                 conditioners = list(product(*conditioned_choices))
-                param["dist"] = dict.fromkeys(conditioners, dict.fromkeys(param["choices"], 0))
+                param["dist"] = dict((c,copy.deepcopy(d)) for c in conditioners)
   
     def assign(self, subject_id):
         unassigned = deque()
@@ -40,6 +42,7 @@ class Experiment(object):
                     if self.assignments[subject_id][conditioner["name"]]:
                         conditioned_choices.append(self.assignments[subject_id][conditioner["name"]])
                     else:
+                        has_values = False
                         break
                 if has_values:
                     cc = tuple(conditioned_choices)
@@ -50,6 +53,3 @@ class Experiment(object):
                     param["dist"][cc][assignment] += 1
                     self.assignments[subject_id][param["name"]] = assignment
         return self.assignments[subject_id]
-                
-# Example color = (choices=["red", "green"], conditioned_on=["shape"])
-# color.choices = ("red":0, "green":1)
