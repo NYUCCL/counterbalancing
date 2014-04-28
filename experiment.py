@@ -3,6 +3,7 @@ import random
 import copy
 from itertools import product
 import time
+import csv
 
 class Experiment(object):
 
@@ -31,6 +32,7 @@ class Experiment(object):
                 for conditioner in param["conditioned_on"]:
                     conditioned_choices.append(conditioner["choices"])
                 conditioners = list(product(*conditioned_choices))
+                conditioners.append(param["name"])
                 param["dist"] = dict((c,copy.deepcopy(d)) for c in conditioners)
   
     def assign(self, subject_id, check=False):
@@ -72,6 +74,7 @@ class Experiment(object):
                     min_keys = [k for k in dist if dist[k] == min_value]
                     assignment = random.choice(min_keys)
                     param["dist"][cc][assignment] += 1
+                    param["dist"][param["name"]][assignment] += 1
                     self.assignments[subject_id][param["name"]] = assignment
         return self.assignments[subject_id]
     
@@ -105,6 +108,7 @@ class Experiment(object):
                             conditioned_choices.append(self.assignments[subject_id][conditioner["name"]])
                         cc = tuple(conditioned_choices)
                         param["dist"][cc][assignment] -= 1
+                        param["dist"][param["name"]][assignment] -= 1
     
     def completed(self, subject_id):
         """
@@ -125,6 +129,7 @@ class Experiment(object):
                             conditioned_choices.append(self.assignments[subject_id][conditioner["name"]])
                         cc = tuple(conditioned_choices)
                         param["dist"][cc][assignment] += 1
+                        param["dist"][param["name"]][assignment] += 1
         
     def check_time_outs(self):
         """
@@ -135,3 +140,21 @@ class Experiment(object):
             if not subject["completed"] and not subject["removed"] and time.time() - subject["time_stamp"] > self.length:
                 self.remove(subject_id)
                 subject["removed"] = True
+
+    def write_csv(self, write_file):
+        """
+        Writes assignments to file
+        Arguments:
+        write_file -- file name
+        """
+        with open(write_file, 'wb') as csvfile:
+            writer = csv.writer(csvfile)
+            header = ["subject_id"]
+            conditions = self.assignments.itervalues.next().keys()
+            header.extend(conditions)
+            writer.writerow(header)
+            for subject_id in self.assignments:
+                row = [subject_id]
+                row.extend(self.assignments[subject_id].values())
+                writer.writerow(row)
+            
