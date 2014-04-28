@@ -7,7 +7,7 @@ import csv
 
 class Experiment(object):
 
-    def __init__(self, params, length):
+    def __init__(self, params, length=100000000000):
         """
         Initializes the experiment
         Arguments:
@@ -150,7 +150,7 @@ class Experiment(object):
         with open(write_file, 'wb') as csvfile:
             writer = csv.writer(csvfile)
             header = ["subject_id"]
-            conditions = self.assignments.itervalues.next().keys()
+            conditions = self.assignments.itervalues().next().keys()
             header.extend(conditions)
             writer.writerow(header)
             for subject_id in self.assignments:
