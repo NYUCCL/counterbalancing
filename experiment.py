@@ -2,13 +2,26 @@ from collections import defaultdict, deque
 import random
 import copy
 from itertools import product
+import time
 
 class Experiment(object):
 
-    def __init__(self, params):
+    def __init__(self, params, length):
+        """
+        Initializes the experiment
+        Arguments:
+        params -- a set of dictionaries, one for each parameter. 
+            Each dict must include: 
+                ["choices"] - a list of strings of options for that parameter, e.g. ["square", "circle"]
+                ["conditioned_on"] - a list of dicts of other parameters the choice should be conditioned
+                    on. e.g. [color, number]
+                ["name"] - the name of the parameter
+        length -- the length of the experiment
+        """
         self.params = params
         self.paramCounts = {}
         self.assignments = defaultdict(dict)
+        self.length = length
         for param in self.params:
             d = dict.fromkeys(param["choices"], 0)
             if len(param["conditioned_on"]) == 0:
@@ -20,10 +33,18 @@ class Experiment(object):
                 conditioners = list(product(*conditioned_choices))
                 param["dist"] = dict((c,copy.deepcopy(d)) for c in conditioners)
   
-    def assign(self, subject_id):
+    def assign(self, subject_id, check=False):
+        """
+        Assigns a subject to a condition
+        Arguments:
+        subject_id -- subject hash
+        check -- if true, removes subjects that have been in the experiment for too long
+        """
         unassigned = deque()
+        if check:
+            self.check_time_outs()
         if not self.assignments[subject_id]:
-            self.assignments[subject_id] = {}
+            self.add_subject(subject_id)
             for param in self.params:
                 if len(param["choices"]) != 0:
                     if len(param["conditioned_on"]) == 0:
@@ -53,8 +74,25 @@ class Experiment(object):
                     param["dist"][cc][assignment] += 1
                     self.assignments[subject_id][param["name"]] = assignment
         return self.assignments[subject_id]
+    
+    def add_subject(self, subject_id):
+        """
+        Adds a new subject to the database
+        Arguments:
+        subject_id -- subject hash
+        """
+        self.assignments[subject_id] = {}
+        self.assignments[subject_id]["completed"] = False
+        self.assignments[subject_id]["time_stamp"] = time.time()
+        self.assignments[subject_id]["removed"] = False
         
+    
     def remove(self, subject_id):
+        """
+        Removes a subject from the counts of parameters. However, the subject's assignment to parameters remains in the database
+        Arguments:
+        subject_id -- subject hash
+        """
         if self.assignments[subject_id]:
             for param in self.params:
                 assignment = self.assignments[subject_id][param["name"]]
@@ -67,3 +105,33 @@ class Experiment(object):
                             conditioned_choices.append(self.assignments[subject_id][conditioner["name"]])
                         cc = tuple(conditioned_choices)
                         param["dist"][cc][assignment] -= 1
+    
+    def completed(self, subject_id):
+        """
+        Marks a subject as having completed the experiment. If they had been removed before, adds them back to the counts
+        Arguments:
+        subject_id -- subject hash
+        """
+        self.assignments[subject_id]["completed"] = True
+        if self.assignments[subject_id]["removed"]:
+            for param in self.params:
+                assignment = self.assignments[subject_id][param["name"]]
+                if len(param["choices"]) != 0:
+                    if len(param["conditioned_on"]) == 0:
+                        param["dist"][assignment] += 1
+                    else:
+                        conditioned_choices = []
+                        for conditioner in param["conditioned_on"]:
+                            conditioned_choices.append(self.assignments[subject_id][conditioner["name"]])
+                        cc = tuple(conditioned_choices)
+                        param["dist"][cc][assignment] += 1
+        
+    def check_time_outs(self):
+        """
+        Checks if each subject has timed out of the experiment and if so, removes them from the counts
+        """
+        for subject_id in self.assignments:
+            subject = self.assignments[subject_id]
+            if not subject["completed"] and not subject["removed"] and time.time() - subject["time_stamp"] > self.length:
+                self.remove(subject_id)
+                subject["removed"] = True
