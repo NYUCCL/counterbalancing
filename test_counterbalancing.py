@@ -22,4 +22,6 @@ class CounterbalanceTestCase(unittest.TestCase):
         for i in range(100):
             self.e.assign(i)
         assert self.e.params[0]["dist"]["blue"] == 50
-
+        
+if __name__ == '__main__':
+    unittest.main()
