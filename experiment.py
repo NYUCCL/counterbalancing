@@ -1,5 +1,5 @@
 import pandas as pd
-from functools import partial
+import ops as o
 
 class Experiment(object):
 
@@ -7,7 +7,6 @@ class Experiment(object):
         self.params = dict()
         self.ncparams = dict()
         self.cparams = dict()
-        self.o = Ops()
         if table == None:
             self.table = pd.DataFrame()
         else:

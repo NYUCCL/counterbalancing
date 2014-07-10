@@ -1,6 +1,7 @@
 import hashlib
 import time
 import copy
+from functools import partial
 from collections import defaultdict
 
 class Ops(object):
@@ -8,6 +9,12 @@ class Ops(object):
     def __init__(self):
         self.timestamp = time.clock()
         self.LONG_SCALE = float(0xFFFFFFFFFFFFFFF)
+    
+    def setparams(op):
+        def sp(*args, **keywords):
+            p = partial(op, *args, **keywords)
+            return p
+        return sp
     
     def getHash(self,subject_id):
         sid = str(subject_id + self.timestamp)
@@ -17,18 +24,21 @@ class Ops(object):
         zero_to_one = self.getHash(subject_id)/self.LONG_SCALE
         return min_val + max_val*zero_to_one
     
+    @setparams
     def randomFloat(self, num_subjects, max_val=1, min_val=0):
         assignments = []
         for i in range(0, num_subjects):
             assignments.append(self.getUniform(i, min_val, max_val))    
         return assignments
     
+    @setparams
     def randomInteger(self, num_subjects, max_val=1, min_val=0):
         assignments = []
         for i in range(0, num_subjects):
             assignments.append(min_val + self.getHash(i) % (max_val - min_val + 1))
         return assignments
         
+    @setparams
     def bernoulliTrial(self, num_subjects, p):
         assignments = []
         for i in range(0, num_subjects):
@@ -36,7 +46,10 @@ class Ops(object):
             assignments.append(1 if rand_val <= p else 0)
         return assignments
         
+    @setparams
     def uniformChoice(self, num_subjects, choices):
+        print num_subjects
+        print choices
         assignments = []
         if len(choices) != 0:
             for i in range(0, num_subjects):
@@ -44,6 +57,7 @@ class Ops(object):
                 assignments.append(choices[rand_index])  
         return assignments
     
+    @setparams
     def weightedChoice(self, num_subjects, choices, weights):
         assignments = []
         if len(choices) != 0:
@@ -58,7 +72,8 @@ class Ops(object):
                     if stop_value <= cum_weights[choice]:
                         assignments.append(choice)
         return assignments 
-            
+        
+    @setparams  
     def sample(self, num_subjects, choices, draws=-1):
         assignments = []
         if draws == -1:
@@ -69,13 +84,15 @@ class Ops(object):
                 choices[i], choices[j] = choices[j], choices[i]
             assignments.append(choices[:draws])
         return assignments        
-        
+    
+    @setparams   
     def roundRobin(self, num_subjects, choices):
         rounds = num_subjects/len(choices) + 1
         assignments = choices * rounds
         assignments = self.sample(1, assignments, num_subjects)[0]
         return assignments
-        
+    
+    @setparams    
     def conditionedRoundRobin(self, conditioners, choices):
         assignments = []
         counts = dict.fromkeys(choices, 0)
@@ -93,5 +110,7 @@ class Ops(object):
             conditions[conds][c] += 1
             assignments.append(c)     
         return assignments
+        
+
             
         
