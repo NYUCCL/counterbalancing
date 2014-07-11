@@ -10,7 +10,7 @@ class Ops(object):
         self.timestamp = time.clock()
         self.LONG_SCALE = float(0xFFFFFFFFFFFFFFF)
     
-    def setparams(op):
+    def setParams(op):
         def sp(*args, **keywords):
             p = partial(op, *args, **keywords)
             return p
@@ -24,21 +24,21 @@ class Ops(object):
         zero_to_one = self.getHash(subject_id)/self.LONG_SCALE
         return min_val + max_val*zero_to_one
     
-    @setparams
+    @setParams
     def randomFloat(self, num_subjects, max_val=1, min_val=0):
         assignments = []
         for i in range(0, num_subjects):
             assignments.append(self.getUniform(i, min_val, max_val))    
         return assignments
     
-    @setparams
+    @setParams
     def randomInteger(self, num_subjects, max_val=1, min_val=0):
         assignments = []
         for i in range(0, num_subjects):
             assignments.append(min_val + self.getHash(i) % (max_val - min_val + 1))
         return assignments
         
-    @setparams
+    @setParams
     def bernoulliTrial(self, num_subjects, p):
         assignments = []
         for i in range(0, num_subjects):
