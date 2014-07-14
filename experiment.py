@@ -20,6 +20,7 @@ class Experiment(object):
             self.cparams[param] = [op, conditioned_on]
 
     def create_table(self, num_subjects):
+        self.table = pd.DataFrame()
         for param in self.ncparams:
             self.table[param] = self.ncparams[param](num_subjects)
         for param in self.cparams:
