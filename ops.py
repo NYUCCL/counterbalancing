@@ -46,10 +46,8 @@ class Ops(object):
             assignments.append(1 if rand_val <= p else 0)
         return assignments
         
-    @setparams
+    @setParams
     def uniformChoice(self, num_subjects, choices):
-        print num_subjects
-        print choices
         assignments = []
         if len(choices) != 0:
             for i in range(0, num_subjects):
@@ -57,7 +55,7 @@ class Ops(object):
                 assignments.append(choices[rand_index])  
         return assignments
     
-    @setparams
+    @setParams
     def weightedChoice(self, num_subjects, choices, weights):
         assignments = []
         if len(choices) != 0:
@@ -73,7 +71,7 @@ class Ops(object):
                         assignments.append(choice)
         return assignments 
         
-    @setparams  
+    @setParams  
     def sample(self, num_subjects, choices, draws=-1):
         assignments = []
         if draws == -1:
@@ -85,28 +83,27 @@ class Ops(object):
             assignments.append(choices[:draws])
         return assignments        
     
-    @setparams   
+    @setParams   
     def roundRobin(self, num_subjects, choices):
         rounds = num_subjects/len(choices) + 1
         assignments = choices * rounds
         assignments = self.sample(1, assignments, num_subjects)[0]
         return assignments
     
-    @setparams    
+    @setParams    
     def conditionedRoundRobin(self, conditioners, choices):
         assignments = []
         counts = dict.fromkeys(choices, 0)
         conditions = defaultdict(dict)
         for i in range(conditioners.shape[0]):
             conds = str(conditioners.values[i])
-            print conditions
             if not conditions[conds]:
                 conditions[conds] = dict(zip(choices, [0] * len(choices))) 
-                c = self.uniformChoice(1, choices)[0]
+                c = choices[self.getHash(i) % len(choices)]
             else:
                 min_value = min(conditions[conds].itervalues())
                 min_keys = [k for k in conditions[conds] if conditions[conds][k] == min_value]
-                c = self.uniformChoice(1, min_keys)[0]
+                c = min_keys[self.getHash(i) % len(min_keys)]
             conditions[conds][c] += 1
             assignments.append(c)     
         return assignments

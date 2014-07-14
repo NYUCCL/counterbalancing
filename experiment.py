@@ -28,8 +28,11 @@ class Experiment(object):
         self.table["assigned"] = [0] * num_subjects
         return self.table
                     
-    def assign(self):
-        index = self.table[self.table["assigned"] == 0].index[0]
+    def assign(self, subject_id=-1):
+        if subject_id >= 0:
+            index = subject_id
+        else:
+            index = self.table[self.table["assigned"] == 0].index[0]
         self.table["assigned"][index] = 1
         return self.table.iloc[index]
 

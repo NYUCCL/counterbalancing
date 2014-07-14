@@ -1,27 +1,21 @@
 import unittest
+import ops
 from experiment import Experiment
 
 class CounterbalanceTestCase(unittest.TestCase):
     def set_up(self):
-        color = {}
-        shape = {}
-        shape["choices"] = ["square", "circle"]
-        shape["conditioned_on"] = []
-        shape["name"] = "shape"
-        color["choices"] = ["green", "blue"]
-        color["conditioned_on"] = [shape]
-        color["name"] = "color"
-        self.e = Experiment([color, shape])
+        e = Experiment()
+        e.add_param("color", uniformChoice(choices = ["blue", "green"]))
+        e.add_param("shape", conditionedRoundRobin(choices = ["square", "circle"]), ["color"])
+        e.create_table(10)
         
     def test_dict(self):
-        a = self.e.assign(1)
-        b = self.e.assign(2)
+        a = self.e.assign(4)
+        b = self.e.assign(4)
         assert a == b
         
     def test_dist(self):
-        for i in range(100):
-            self.e.assign(i)
-        assert self.e.params[0]["dist"]["blue"] == 50
+        assert self.e.table.stack().value_counts()["square"] == 5
         
 if __name__ == '__main__':
     unittest.main()
